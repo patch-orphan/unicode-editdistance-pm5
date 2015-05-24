@@ -1,1 +1,1 @@
-# EditDistance (name TBD) for Perl 5
+# Unicode::EditDistance for Perl 5

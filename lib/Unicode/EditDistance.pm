@@ -1,4 +1,4 @@
-package EditDistance;
+package Unicode::EditDistance;
 
 use v5.8.1;
 use utf8;
