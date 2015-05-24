@@ -1,16 +1,16 @@
 package EditDistance;
 
+use v5.8.1;
 use utf8;
-use strict;
-use warnings;
-use parent 'Exporter';
 use List::Util qw( min );
 
-our $VERSION   = '0.00_01';
-our @EXPORT_OK = qw( levenshtein );
+use Moo;
+use namespace::clean;
 
-sub levenshtein {
-    my ($str1, $str2) = @_;
+our $VERSION   = '0.00_01';
+
+sub distance {
+    my ($self, $str1, $str2) = @_;
     return _levenshtein($str1, length $str1, $str2, length $str2);
 }
 
