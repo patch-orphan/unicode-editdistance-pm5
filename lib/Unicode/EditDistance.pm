@@ -3,6 +3,7 @@ package Unicode::EditDistance;
 use v5.8.1;
 use utf8;
 use List::Util qw( min );
+use Unicode::Util qw( grapheme_length grapheme_substr );
 
 use Moo;
 use namespace::clean;
@@ -11,7 +12,10 @@ our $VERSION   = '0.00_01';
 
 sub distance {
     my ($self, $str1, $str2) = @_;
-    return _levenshtein($str1, length $str1, $str2, length $str2);
+    return _levenshtein(
+        $str1, grapheme_length($str1),
+        $str2, grapheme_length($str2),
+    );
 }
 
 sub _levenshtein {
@@ -22,8 +26,8 @@ sub _levenshtein {
     return $str1_length unless $str2_length;
 
     # test if last characters of the strings match
-    my $cost = substr($str1, $str1_length - 1, 1)
-            eq substr($str2, $str2_length - 1, 1)
+    my $cost = grapheme_substr($str1, $str1_length - 1, 1)
+            eq grapheme_substr($str2, $str2_length - 1, 1)
              ? 0 : 1;
 
     # return minimum of:
