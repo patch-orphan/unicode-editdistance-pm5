@@ -2,20 +2,36 @@ package Unicode::EditDistance;
 
 use v5.8.1;
 use utf8;
+use Carp qw( croak );
 use List::Util qw( min );
 use Unicode::Util qw( grapheme_length grapheme_substr );
 
 use Moo;
 use namespace::clean;
 
-our $VERSION   = '0.00_01';
+our $VERSION = '0.00_01';
+
+my %metrics = (
+    levenshtein => sub {
+        my ($str1, $str2) = @_;
+        return _levenshtein(
+            $str1, grapheme_length($str1),
+            $str2, grapheme_length($str2),
+        );
+    }
+);
+
+has metric => (
+    is  => 'ro',
+    isa => sub {
+        croak qq{invalid value "$_[0]"} unless exists $metrics{$_[0]};
+    },
+    defualt => 'levenshtein',
+);
 
 sub distance {
     my ($self, $str1, $str2) = @_;
-    return _levenshtein(
-        $str1, grapheme_length($str1),
-        $str2, grapheme_length($str2),
-    );
+    return $metrics{$self->metric}($str1, $str2);
 }
 
 sub _levenshtein {
