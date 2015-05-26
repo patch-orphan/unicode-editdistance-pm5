@@ -30,8 +30,8 @@ sub distance {
 
 sub _levenshtein {
     my ($str1, $str2) = @_;
-    my @chr1 = split //, $str1;
-    my @chr2 = split //, $str2;
+    my @chr1 = $str1 =~ /(\X)/g;
+    my @chr2 = $str2 =~ /(\X)/g;
 
     return @chr1 == @chr2 ? 1 : 0
         unless @chr1 && @chr2;
