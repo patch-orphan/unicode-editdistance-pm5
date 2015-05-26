@@ -3,7 +3,7 @@ package Unicode::EditDistance;
 use v5.8.1;
 use utf8;
 use Carp qw( croak );
-use List::Util qw( min );
+use List::Util qw( min max );
 use Unicode::Util qw( grapheme_length grapheme_substr );
 
 use Moo;
@@ -12,13 +12,7 @@ use namespace::clean;
 our $VERSION = '0.00_01';
 
 my %metrics = (
-    levenshtein => sub {
-        my ($str1, $str2) = @_;
-        return _levenshtein(
-            $str1, grapheme_length($str1),
-            $str2, grapheme_length($str2),
-        );
-    }
+    levenshtein => \&_levenshtein,
 );
 
 has metric => (
@@ -35,24 +29,39 @@ sub distance {
 }
 
 sub _levenshtein {
-    my ($str1, $str1_length, $str2, $str2_length) = @_;
+    my ($str1, $str2) = @_;
+    my @chr1 = split //, $str1;
+    my @chr2 = split //, $str2;
 
-    # base case: empty strings
-    return $str2_length unless $str1_length;
-    return $str1_length unless $str2_length;
+    return @chr1 == @chr2 ? 1 : 0
+        unless @chr1 && @chr2;
 
-    # test if last characters of the strings match
-    my $cost = grapheme_substr($str1, $str1_length - 1, 1)
-            eq grapheme_substr($str2, $str2_length - 1, 1)
-             ? 0 : 1;
+    # previous cost array, horizontally
+    my @prev = 0 .. @chr1;
 
-    # return minimum of:
-    # delete char from $str1, delete char from $str2, and delete char from both
-    return min(
-        _levenshtein($str1, $str1_length - 1, $str2, $str2_length    ) + 1,
-        _levenshtein($str1, $str1_length    , $str2, $str2_length - 1) + 1,
-        _levenshtein($str1, $str1_length - 1, $str2, $str2_length - 1) + $cost,
-    );
+    for my $pos2 (1 .. @chr2) {
+        # cost array, horizontally
+        my @cost = $pos2;
+
+        for my $pos1 (1 .. @chr1) {
+            # minimum of cell to the left + 1, to the top + 1,
+            # diagonally left and up + cost
+            $cost[$pos1] = min(
+                $cost[$pos1 - 1] + 1,
+                $prev[$pos1]     + 1,
+                $prev[$pos1 - 1] + ($chr1[$pos1 - 1] ne $chr2[$pos2 - 1]),
+            );
+        }
+
+        # copy current distance counts to previous row distance counts
+        my @tmp = @prev;
+        @prev = @cost;
+        @cost = @tmp;
+    }
+
+    # our last action in the above loop was to switch @cost and @prev,
+    # so @prev now actually has the most recent cost counts
+    return 1 - $prev[-1] / max scalar @chr1, scalar @chr2;
 }
 
 1;
