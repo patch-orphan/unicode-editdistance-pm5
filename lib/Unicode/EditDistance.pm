@@ -36,32 +36,27 @@ sub _levenshtein {
     return @chr1 == @chr2 ? 1 : 0
         unless @chr1 && @chr2;
 
-    # previous cost array, horizontally
-    my @prev = 0 .. @chr1;
+    # horizontally
+    my @cost;
 
     for my $pos2 (1 .. @chr2) {
-        # cost array, horizontally
-        my @cost = $pos2;
+        my @prev = @cost ? @cost : 0 .. @chr1;
+        @cost = $pos2;
 
         for my $pos1 (1 .. @chr1) {
-            # minimum of cell to the left + 1, to the top + 1,
-            # diagonally left and up + cost
+            # minimum of cells:
+            # - to the left + 1,
+            # - to the top + 1,
+            # - diagonally left and up + cost
             $cost[$pos1] = min(
                 $cost[$pos1 - 1] + 1,
                 $prev[$pos1]     + 1,
                 $prev[$pos1 - 1] + ($chr1[$pos1 - 1] ne $chr2[$pos2 - 1]),
             );
         }
-
-        # copy current distance counts to previous row distance counts
-        my @tmp = @prev;
-        @prev = @cost;
-        @cost = @tmp;
     }
 
-    # our last action in the above loop was to switch @cost and @prev,
-    # so @prev now actually has the most recent cost counts
-    return 1 - $prev[-1] / max scalar @chr1, scalar @chr2;
+    return 1 - $cost[-1] / max scalar @chr1, scalar @chr2;
 }
 
 1;
